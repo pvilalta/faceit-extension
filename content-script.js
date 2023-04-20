@@ -1,4 +1,18 @@
+function waitForMessage() {
+  return new Promise(resolve => {
+    chrome.runtime.onMessage.addListener(function listener(request) {
+      chrome.runtime.onMessage.removeListener(listener);
+      resolve(request);
+    });
+  });
+}
+
 (async () => {
+  const { userNickname, accuracy } = await waitForMessage();
+
+  let currentUserNickname = userNickname;
+  let currentAccuracy = (accuracy && parseInt(accuracy, 10)) || 3;
+
   console.log('gooooo');
   const maps = ['de_inferno', 'de_nuke', 'de_mirage', 'de_overpass', 'de_ancient', 'de_vertigo', 'de_dust2'];
 
@@ -22,12 +36,17 @@
   const team1 = [];
   const team2 = [];
 
-  matchDatas.teams.faction1.roster.forEach(player => team1.push(player.player_id));
+  let currentUserTeam = 'You are in team 2';
+
+  matchDatas.teams.faction1.roster.forEach(player => {
+    if (player.nickname === currentUserNickname) {
+      currentUserTeam = 'You are in team 1';
+    }
+    team1.push(player.player_id);
+  });
   matchDatas.teams.faction2.roster.forEach(player => team2.push(player.player_id));
 
   const getTeamStat = async (teamName, team) => {
-    const nbOfPlayersAnalysis = 3;
-
     const teamMatches = await Promise.all(
       team.map(id =>
         fetchFaceItApi(`https://open.faceit.com/data/v4/players/${id}/history?game=csgo&offset=0&limit=100`)
@@ -42,8 +61,9 @@
     );
 
     const praccMatches = uniqueAllMatches.filter(match => {
+      console.log('currentAccuracy', currentAccuracy);
       const matchedPlayers = match.playing_players.filter(player => team.includes(player));
-      return matchedPlayers.length >= nbOfPlayersAnalysis;
+      return matchedPlayers.length >= currentAccuracy;
     });
 
     const mapList = {};
@@ -77,10 +97,12 @@
         };
       })
       .sort((a, b) => (a.winRate > b.winRate ? -1 : 1));
+    console.log('mapListWinRate', mapListWinRate);
 
-    console.log(nbOfPlayersAnalysis, teamName, mapListWinRate);
+    return { team: teamName, winrate: mapListWinRate };
   };
 
-  getTeamStat('team1', team1);
-  getTeamStat('team2', team2);
+  const res = await Promise.all(getTeamStat('team1', team1), getTeamStat('team2', team2));
+
+  console.log(currentAccuracy, currentUserTeam, res);
 })();

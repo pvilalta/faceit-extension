@@ -16,5 +16,11 @@
     "16": "handgun16.png",
     "48": "handgun48.png",
     "128": "handgun128.png"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.faceit.com/en/csgo/room/*"],
+      "js": ["content-script.js"]
+    }
+  ]
 }
