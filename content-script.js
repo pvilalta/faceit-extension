@@ -61,7 +61,6 @@ function waitForMessage() {
     );
 
     const praccMatches = uniqueAllMatches.filter(match => {
-      console.log('currentAccuracy', currentAccuracy);
       const matchedPlayers = match.playing_players.filter(player => team.includes(player));
       return matchedPlayers.length >= currentAccuracy;
     });
@@ -97,12 +96,10 @@ function waitForMessage() {
         };
       })
       .sort((a, b) => (a.winRate > b.winRate ? -1 : 1));
-    console.log('mapListWinRate', mapListWinRate);
 
     return { team: teamName, winrate: mapListWinRate };
   };
+  const res = await Promise.all([getTeamStat('team1', team1), getTeamStat('team2', team2)]);
 
-  const res = await Promise.all(getTeamStat('team1', team1), getTeamStat('team2', team2));
-
-  console.log(currentAccuracy, currentUserTeam, res);
+  console.log(`accuracy: ${currentAccuracy}\n ${currentUserTeam}`, res);
 })();
