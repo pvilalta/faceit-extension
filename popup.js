@@ -1,8 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const activeTabUrl = document.getElementById('active-tab-url');
-
-  // Sélectionner le bouton et ajouter un gestionnaire d'événement 'click'
   const executeScriptButton = document.getElementById('execute-script');
+
   executeScriptButton.addEventListener('click', () => {
     const userNickname = document.getElementById('nickname').value;
     const accuracy = document.getElementById('accuracy').value;
@@ -10,8 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
       const activeTab = tabs[0];
 
-      const regex = /^https:\/\/www\.faceit\.com\/en\/csgo\/room\//;
-
+      const regex = /^https:\/\/www\.faceit\.com\/(en|fr)\/csgo\/room\//;
       console.log('activeTab.url', activeTab.url);
 
       if (regex.test(activeTab.url)) {
