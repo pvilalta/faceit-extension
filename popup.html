@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Faceit Team Extractor</title>
+    <title>Team Teller</title>
     <style>
       body {
         width: 300px;
@@ -15,15 +15,15 @@
     </style>
   </head>
   <body>
-    <h1>Faceit Team Winrate</h1>
-    <!-- Ajouter les champs nickname et accuracy -->
-    <label for="nickname">Nickname:</label>
-    <input type="text" id="nickname" name="nickname" placeholder="your FaceIt nickname"><br><br>
+    <h1>Team Teller</h1>
+    <div id="player"></div>
 
     <label for="accuracy">Accuracy:</label>
     <input type="number" id="accuracy" name="accuracy" placeholder="default value is 3"><br><br>
 
     <button id="execute-script">Get map winrate</button>
+
+    <div id="result"></div>
     <pre id="output"></pre>
     <script src="popup.js"></script>
   </body>

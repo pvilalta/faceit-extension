@@ -1,3 +1,10 @@
+function insertHtlmText(parentEl, elToCreate, data) {
+  let element = document.getElementById(parentEl);
+  let createdTag = document.createElement(elToCreate);
+  createdTag.textContent = data;
+  element.appendChild(createdTag);
+}
+
 function waitForMessage() {
   return new Promise(resolve => {
     chrome.runtime.onMessage.addListener(function listener(request) {
@@ -13,7 +20,8 @@ function waitForMessage() {
   let currentUserNickname = userNickname;
   let currentAccuracy = (accuracy && parseInt(accuracy, 10)) || 3;
 
-  console.log('gooooo');
+  chrome.runtime.sendMessage({ message: 'fetching' });
+
   const maps = ['de_inferno', 'de_nuke', 'de_mirage', 'de_overpass', 'de_ancient', 'de_vertigo', 'de_dust2'];
 
   const currentUrl = window.location.href;
@@ -36,11 +44,11 @@ function waitForMessage() {
   const team1 = [];
   const team2 = [];
 
-  let currentUserTeam = 'You are in team 2';
+  let currentUserTeam = 'team2';
 
   matchDatas.teams.faction1.roster.forEach(player => {
     if (player.nickname === currentUserNickname) {
-      currentUserTeam = 'You are in team 1';
+      currentUserTeam = 'team1';
     }
     team1.push(player.player_id);
   });
@@ -99,7 +107,17 @@ function waitForMessage() {
 
     return { team: teamName, winrate: mapListWinRate };
   };
-  const res = await Promise.all([getTeamStat('team1', team1), getTeamStat('team2', team2)]);
+  const result = await Promise.all([getTeamStat('team1', team1), getTeamStat('team2', team2)]);
 
-  console.log(`accuracy: ${currentAccuracy}\n ${currentUserTeam}`, res);
+  const filteredResult = result.map(faction => {
+    teamName = faction.team === currentUserTeam ? 'Your team' : 'Opponent';
+    return {
+      ...faction,
+      team: teamName,
+    };
+  });
+  chrome.runtime.sendMessage({
+    message: 'result',
+    data: filteredResult,
+  });
 })();

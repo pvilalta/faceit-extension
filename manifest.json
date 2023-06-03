@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Faceit Team Winrate Teller",
+  "name": "Team Teller",
   "version": "1.0",
   "description": "Récupère les pseudos des joueurs des deux équipes sur une page de match Faceit",
   "action": {
