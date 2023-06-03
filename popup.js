@@ -9,17 +9,17 @@ function generateHTML(data) {
   let html = '';
 
   data.forEach(teamData => {
-    html += `<h2>${teamData.team}</h2>`;
+    html += `<h2>${teamData.name}</h2>`;
     html += '<table>';
     html += '<tr><th>Map</th><th>Total Games</th><th>Wins</th><th>Loses</th><th>Win Rate</th></tr>';
 
-    teamData.winrate.forEach(winrate => {
+    teamData.maps.forEach(map => {
       html += '<tr>';
-      html += `<td>${winrate.name}</td>`;
-      html += `<td>${winrate.win + winrate.lose}</td>`;
-      html += `<td>${winrate.win}</td>`;
-      html += `<td>${winrate.lose}</td>`;
-      html += `<td>${winrate.winRate}%</td>`;
+      html += `<td>${map.name}</td>`;
+      html += `<td>${map.win + map.lose}</td>`;
+      html += `<td>${map.win}</td>`;
+      html += `<td>${map.lose}</td>`;
+      html += `<td>${map.winRate}%</td>`;
       html += '</tr>';
     });
 
@@ -35,7 +35,7 @@ function generateHTML(data) {
 document.addEventListener('DOMContentLoaded', async () => {
   const executeScriptButton = document.getElementById('execute-script');
 
-  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  chrome.runtime.onMessage.addListener(request => {
     switch (request.message) {
       case 'fetching':
         insertHtlmText('result', 'p', 'fetching');
@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const resultTab = generateHTML(request.data);
         let element = document.getElementById('result');
         element.appendChild(resultTab);
+        document.getElementById('result').firstChild.remove();
     }
   });
 
@@ -61,9 +62,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         insertHtlmText('player', 'h3', nickname);
       });
 
+    let scriptButton = document.getElementById('execute-script');
+    scriptButton.disabled = true;
+
     const regex = /^https:\/\/www\.faceit\.com\/(en|fr)\/csgo\/room\//;
 
     if (regex.test(activeTab.url)) {
+      scriptButton.disabled = false;
       executeScriptButton.addEventListener('click', () => {
         const accuracy = document.getElementById('accuracy').value;
 

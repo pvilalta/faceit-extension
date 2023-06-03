@@ -1,1 +1,1 @@
-# faceit-extension
+# team-teller

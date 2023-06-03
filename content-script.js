@@ -17,7 +17,6 @@ function waitForMessage() {
 (async () => {
   const { userNickname, accuracy } = await waitForMessage();
 
-  let currentUserNickname = userNickname;
   let currentAccuracy = (accuracy && parseInt(accuracy, 10)) || 3;
 
   chrome.runtime.sendMessage({ message: 'fetching' });
@@ -41,22 +40,17 @@ function waitForMessage() {
 
   const matchDatas = await fetchFaceItApi(`https://open.faceit.com/data/v4/matches/${currentMatch}`);
 
-  const team1 = [];
-  const team2 = [];
+  const teams = [];
+  for (const faction in matchDatas.teams) {
+    teams.push({
+      name: matchDatas.teams[faction].name,
+      playersId: matchDatas.teams[faction].roster.map(player => player.player_id),
+    });
+  }
 
-  let currentUserTeam = 'team2';
-
-  matchDatas.teams.faction1.roster.forEach(player => {
-    if (player.nickname === currentUserNickname) {
-      currentUserTeam = 'team1';
-    }
-    team1.push(player.player_id);
-  });
-  matchDatas.teams.faction2.roster.forEach(player => team2.push(player.player_id));
-
-  const getTeamStat = async (teamName, team) => {
+  const getMapsWinrate = async playersId => {
     const teamMatches = await Promise.all(
-      team.map(id =>
+      playersId.map(id =>
         fetchFaceItApi(`https://open.faceit.com/data/v4/players/${id}/history?game=csgo&offset=0&limit=100`)
       )
     );
@@ -69,7 +63,7 @@ function waitForMessage() {
     );
 
     const praccMatches = uniqueAllMatches.filter(match => {
-      const matchedPlayers = match.playing_players.filter(player => team.includes(player));
+      const matchedPlayers = match.playing_players.filter(player => playersId.includes(player));
       return matchedPlayers.length >= currentAccuracy;
     });
 
@@ -84,7 +78,7 @@ function waitForMessage() {
         if (!mapList[map]) mapList[map] = { win: 0, lose: 0 };
 
         const isFaction1 = Boolean(
-          match.teams.faction1.players.map(({ player_id }) => player_id).find(playerId => team.includes(playerId))
+          match.teams.faction1.players.map(({ player_id }) => player_id).find(playerId => playersId.includes(playerId))
         );
         const hasFaction1Won = match.results.score.faction1;
         const teamHasWon = (isFaction1 && hasFaction1Won) || (!isFaction1 && !hasFaction1Won);
@@ -93,7 +87,7 @@ function waitForMessage() {
       })
     );
 
-    const mapListWinRate = Object.keys(mapList)
+    return Object.keys(mapList)
       .filter(mapName => maps.includes(mapName))
       .map(mapName => {
         const currentMap = mapList[mapName];
@@ -104,20 +98,20 @@ function waitForMessage() {
         };
       })
       .sort((a, b) => (a.winRate > b.winRate ? -1 : 1));
-
-    return { team: teamName, winrate: mapListWinRate };
   };
-  const result = await Promise.all([getTeamStat('team1', team1), getTeamStat('team2', team2)]);
 
-  const filteredResult = result.map(faction => {
-    teamName = faction.team === currentUserTeam ? 'Your team' : 'Opponent';
-    return {
-      ...faction,
-      team: teamName,
-    };
-  });
+  const result = await Promise.all(
+    teams.map(async team => {
+      const maps = await getMapsWinrate(team.playersId);
+      return {
+        name: team.name,
+        maps,
+      };
+    })
+  );
+
   chrome.runtime.sendMessage({
     message: 'result',
-    data: filteredResult,
+    data: result,
   });
 })();
