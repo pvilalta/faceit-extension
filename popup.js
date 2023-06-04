@@ -11,7 +11,7 @@ function generateHTML(data) {
   data.forEach(teamData => {
     html += `<h2>${teamData.name}</h2>`;
     html += '<table>';
-    html += '<tr><th>Map</th><th>Total Games</th><th>Wins</th><th>Loses</th><th>Win Rate</th></tr>';
+    html += '<tr><th>Map</th><th>Total</th><th>Wins</th><th>Loses</th><th>Win Rate</th></tr>';
 
     teamData.maps.forEach(map => {
       html += '<tr>';
@@ -33,18 +33,23 @@ function generateHTML(data) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const executeScriptButton = document.getElementById('execute-script');
+  let scriptButton = document.getElementById('execute-script');
+  scriptButton.disabled = true;
 
   chrome.runtime.onMessage.addListener(request => {
     switch (request.message) {
       case 'fetching':
+        document.getElementById('result').firstChild?.remove();
         insertHtlmText('result', 'p', 'fetching');
+        scriptButton.disabled = true;
+
         break;
       case 'result':
+        document.getElementById('result').firstChild?.remove();
         const resultTab = generateHTML(request.data);
         let element = document.getElementById('result');
         element.appendChild(resultTab);
-        document.getElementById('result').firstChild.remove();
+        scriptButton.disabled = false;
     }
   });
 
@@ -62,14 +67,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         insertHtlmText('player', 'h3', nickname);
       });
 
-    let scriptButton = document.getElementById('execute-script');
-    scriptButton.disabled = true;
-
     const regex = /^https:\/\/www\.faceit\.com\/(en|fr)\/csgo\/room\//;
 
     if (regex.test(activeTab.url)) {
       scriptButton.disabled = false;
-      executeScriptButton.addEventListener('click', () => {
+      scriptButton.addEventListener('click', () => {
         const accuracy = document.getElementById('accuracy').value;
 
         chrome.tabs.sendMessage(activeTab.id, { nickname, accuracy });
